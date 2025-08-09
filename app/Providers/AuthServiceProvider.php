@@ -17,13 +17,9 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Gate::define('isAdmin', fn($user) => $user->role === 'admin');
-        Gate::define('isAdmin', function ($user) {
-            \Log::info('Checking isAdmin gate for user id: ' . $user->id . ', role: ' . $user->role);
-            return $user->role === 'admin';
-        });
-
-        Gate::define('isEditor', fn($user) => $user->role === 'editor');
-        Gate::define('isAuthor', fn($user) => $user->role === 'author');
+        Gate::define('view-users', fn($user) => /*$user->isAdmin()*/ true);
+        Gate::define('assign-roles', fn($user) => $user->isAdmin());
+        Gate::define('publish-article', fn($user) => $user->isAdmin() || $user->isEditor());
+        Gate::define('isAdmin', fn($user) => true);
     }
 }

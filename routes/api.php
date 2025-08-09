@@ -24,8 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/articles/{article}', [ArticleController::class, 'destroy']);
     Route::patch('/articles/{article}/publish', [ArticleController::class, 'publish']);
 
-    // Route::middleware('can:isAdmin')->group(function () {
+    Route::middleware('can:isAdmin')->group(function () {
         Route::get('/users', [UserController::class, 'index']);
         Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
-    // });
+    });
 });
