@@ -3,21 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Article extends Model
 {
+    protected $fillable = ['user_id','title','body','status','published_at'];
 
-     use HasFactory;
-
-    protected $fillable = ['user_id', 'title', 'content', 'is_published'];
-
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
-
-    protected $casts = [
-        'is_published' => 'boolean',
-    ];
 }

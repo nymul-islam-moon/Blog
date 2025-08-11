@@ -1,31 +1,37 @@
 <?php
 
-use App\Http\Controllers\ArticleController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserAdminController;
+use App\Http\Controllers\Api\ArticleController;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+// Auth (Public)
+Route::post('/register', [AuthController::class, 'register']);  // Request: Auth — Register
+Route::post('/login',    [AuthController::class, 'login']);     // Request: Auth — Login
 
+// Authenticated (Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [UserController::class, 'profile']);
+    Route::post('/logout', [AuthController::class, 'logout']);  // Request: Auth — Logout
+    Route::get('/me',      [AuthController::class, 'me']);      // Request: Auth — Me
 
-    Route::get('/articles', [ArticleController::class, 'index']);
-    Route::get('/articles/mine', [ArticleController::class, 'mine']);
-    Route::post('/articles', [ArticleController::class, 'store']);
-    Route::put('/articles/{article}', [ArticleController::class, 'update']);
-    Route::delete('/articles/{article}', [ArticleController::class, 'destroy']);
-    Route::patch('/articles/{article}/publish', [ArticleController::class, 'publish']);
+    // Articles (policy-enforced)
+    Route::get('/articles',                   [ArticleController::class, 'index']);     // Request: Articles — List
+    Route::get('/articles/{article}',         [ArticleController::class, 'show']);      // Request: Articles — Show
+    Route::post('/articles',                  [ArticleController::class, 'store']);     // Request: Articles — Create
+    Route::put('/articles/{article}',         [ArticleController::class, 'update']);    // Request: Articles — Update
+    Route::patch('/articles/{article}',       [ArticleController::class, 'update']);    // Request: Articles — Update
+    Route::post('/articles/{article}/publish',[ArticleController::class, 'publish']);   // Request: Articles — Publish
+    Route::delete('/articles/{article}',      [ArticleController::class, 'destroy']);   // Request: Articles — Delete
+});
 
-    Route::middleware('can:isAdmin')->group(function () {
-        Route::get('/users', [UserController::class, 'index']);
-        Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
-    });
+// Admin-only
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/users', [UserAdminController::class, 'index']);                       // Request: Users — All Users
+    Route::post('/users/{user}/assign-role', [UserAdminController::class, 'assignRole']); // Request: Users — Assign Role
 });

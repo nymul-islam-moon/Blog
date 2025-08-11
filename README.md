@@ -1,168 +1,107 @@
-# Laravel Article Publishing API
+# AP — Laravel 10 Backend (Sanctum + Roles + Policies)
 
-## 📌 Overview
-This is a **Laravel REST API** for managing articles with **role-based access control**.  
-It uses **Laravel Sanctum** for authentication and **Laravel Gates & Policies** for permissions.  
-Admins can manage users and assign roles, while editors and authors can manage articles.
+A clean Laravel 10 API with authentication, role-based access control (RBAC) via **policies**, and an Articles module (CRUD + publish). Includes a full **Postman collection & environment** and a comprehensive **documentation.md**.
 
----
+## Requirements
+- PHP **>= 8.1** (developed on 8.3)
+- Composer **2.x**
+- MySQL **8.x** (tested on 8.0.42)
+- Node **20.x** (only if you later add front-end assets)
+- Ubuntu-friendly (works anywhere, but steps below show Ubuntu examples)
 
-## 🚀 Features
-- **User Authentication** (Laravel Sanctum)
-- **Role-Based Access Control** (`admin`, `editor`, `author`, `guest`)
-- **Article Management**
-  - Create, read, update, delete articles
-  - Publish workflow
-- **User Management** (admin only)
-- **Validation & Exception Handling**
-- **JSON API Responses**
-
----
-
-## 📥 Installation
-
-### 1️⃣ Clone Repository
+## Quick Start
 ```bash
-git clone https://github.com/your-username/your-project.git
-cd your-project
-```
-
-### 2️⃣ Install Dependencies
-```bash
+# 1) Install dependencies
 composer install
-```
 
-### 3️⃣ Configure Environment
-```bash
+# 2) Environment
 cp .env.example .env
 php artisan key:generate
-```
-Edit `.env` with your database credentials:
-```
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=your_database
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-```
 
-### 4️⃣ Migrate Database
-```bash
-php artisan migrate
-```
+# 3) Configure DB (edit .env)
+# Example:
+# DB_CONNECTION=mysql
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_DATABASE=laravel10
+# DB_USERNAME=nymul
+# DB_PASSWORD=12345678
 
-### 5️⃣ Serve Application
-```bash
+# 4) Migrate & seed (creates roles + an admin user)
+php artisan migrate --force
+php artisan db:seed --force
+
+# 5) Run the dev server
 php artisan serve
-```
-The API will be available at:
-```
-http://127.0.0.1:8000
+# → http://127.0.0.1:8000
 ```
 
----
+### Seeded Admin
+- Email: `admin@example.com`
+- Password: `12345678`
 
-## 🔑 Authentication
-This API uses **Bearer Tokens** from **Laravel Sanctum**.  
-Include the token in the `Authorization` header for protected routes:
-```http
-Authorization: Bearer your_api_token
+## Authentication
+This project uses **Laravel Sanctum**.
+- `POST /api/login` → returns a token.
+- Include the token in subsequent requests:
+  - Header: `Authorization: Bearer <token>`
+
+### Quick login (curl)
+```bash
+curl -s {{base_url:-http://127.0.0.1:8000}}/api/login   -H "Content-Type: application/json"   -d '{"email":"admin@example.com","password":"12345678"}'
 ```
 
----
+## RBAC Overview (roles: `admin`, `editor`, `author`)
+- **Admin**: full access (policy `before()` shortcut).
+- **Editor**: manage any article; can publish.
+- **Author**: can create; can update/delete **own drafts**; cannot publish.
 
-## 📡 API Endpoints
+For the full **RBAC truth table** and sample request/response bodies, see **documentation.md**.
 
-### **Auth Routes**
-| Method | Endpoint     | Description         | Auth Required |
-|--------|-------------|--------------------|---------------|
-| POST   | `/register` | Register new user  | ❌ |
-| POST   | `/login`    | Login user         | ❌ |
-| POST   | `/logout`   | Logout user        | ✅ |
+## API Endpoints
+All endpoints, sample payloads, and expected responses are listed in **documentation.md**.
 
-#### Example: Register
-**Request**
-```json
-POST /register
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "secret123"
-}
+## Postman
+Import both files:
+- `AP.postman_collection.json`
+- `AP.postman_environment.json`
+
+Set the **AP** environment active, send **Auth — Login (admin)** to populate `{{token}}`, then use the rest of the requests.
+
+## Repository Pattern
+Articles are implemented using the Repository pattern.
+- Interface: `app/Repositories/Contracts/ArticleRepository.php`
+- Implementation: `app/Repositories/Eloquent/EloquentArticleRepository.php`
+- Binding: `app/Providers/RepositoryServiceProvider.php`
+- Controller DI: `app/Http/Controllers/Api/ArticleController.php`
+
+## Code Map
+- Roles & users: `roles`, `role_user` tables; relations in `User` & `Role` models.
+- Middleware: `role` alias for admin-only routes.
+- Policies: `app/Policies/ArticlePolicy.php` (create/update/delete/publish rules).
+- Seeders: `database/seeders/RoleSeeder.php` (creates roles and the admin user).
+- Routes: `routes/api.php` (auth, users, articles).
+
+## Troubleshooting
+**1) PDO driver: "could not find driver"**
+```bash
+sudo apt install -y php8.3-mysql
+php -m | grep -Ei 'pdo|mysql'   # expect: PDO, pdo_mysql, mysqli
+php artisan config:clear
 ```
-**Response**
-```json
-{
-  "user": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "admin"
-  }
-}
+
+**2) MySQL login 1045**
+```bash
+# Create user bound to localhost and grant DB
+sudo mysql -e "CREATE USER IF NOT EXISTS 'nymul'@'localhost' IDENTIFIED BY '12345678'; GRANT ALL PRIVILEGES ON laravel10.* TO 'nymul'@'localhost'; FLUSH PRIVILEGES;"
 ```
 
----
+**3) Token not applied in Postman**
+Set the **AP** environment active, then run **Auth — Login (admin)**. The test script saves `{{token}}`; use `Authorization: Bearer {{token}}` on protected requests.
 
-### **User Routes**
-| Method | Endpoint     | Description            | Auth Required | Role |
-|--------|-------------|-----------------------|---------------|------|
-| GET    | `/profile`  | Get logged-in profile | ✅ | Any |
-| GET    | `/users`    | List all users        | ✅ | Admin |
-| POST   | `/users/{id}/assign-role` | Assign role to user | ✅ | Admin |
+## Contributing
+- Create a feature branch, run `php artisan test` (if/when tests are added), then open a PR.
+- Please keep `documentation.md` and the Postman files in sync with any API changes.
 
----
-
-### **Article Routes**
-| Method  | Endpoint | Description | Auth Required | Role |
-|---------|----------|-------------|---------------|------|
-| GET     | `/articles`        | List published articles | ✅ | Any |
-| GET     | `/articles/mine`   | List user’s own articles | ✅ | Any |
-| POST    | `/articles`        | Create article | ✅ | Author, Editor, Admin |
-| PUT     | `/articles/{id}` | Update article | ✅ | Owner / Editor / Admin |
-| DELETE  | `/articles/{id}` | Delete article | ✅ | Owner / Editor / Admin |
-| PATCH   | `/articles/{id}/publish` | Publish article | ✅ | Editor / Admin |
-
----
-
-## 🗂 Models
-
-### **User**
-- Fields: `id`, `name`, `email`, `role`, `password`
-- Relationships:
-  - `articles()` → `hasMany(Article)`
-- Helper Methods:
-  - `isAdmin()`, `isEditor()`, `isAuthor()`, `isGuest()`
-
-### **Article**
-- Fields: `id`, `user_id`, `title`, `content`, `is_published`
-- Relationships:
-  - `user()` → `belongsTo(User)`
-
----
-
-## 🔒 Authorization
-
-### **Policies**
-- `ArticlePolicy` handles:
-  - `create`, `update`, `delete`, `publish` permissions
-- Bound in `AuthServiceProvider`
-
-### **Gates**
-Defined in `AuthServiceProvider`:
-- `view-users` → Only Admins
-- `assign-roles` → Only Admins
-- `publish-article` → Admins & Editors
-- `isAdmin` → Returns `true` (used in middleware)
-
----
-
-## 🛠 Development Notes
-- **First registered user** becomes **admin** automatically.
-- Uses **ArticleRepositoryInterface** binding in `AppServiceProvider` for flexibility.
-
----
-
-## 📄 License
-This project is open-source and available under the [MIT License](LICENSE).
+## License
+MIT (or your organization’s preferred license).

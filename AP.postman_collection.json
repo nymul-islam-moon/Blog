@@ -1,0 +1,403 @@
+{
+  "info": {
+    "name": "AP - Laravel 10 API",
+    "_postman_id": "3a44b9d4-6e91-4808-9ef6-ce62118da9aa",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Auth \u2014 Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Author\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"secret1234\",\n  \"password_confirmation\": \"secret1234\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registered (201)\", function(){ pm.response.to.have.status(201); });",
+                  "try { var d = pm.response.json(); if (d.user && d.user.id) pm.environment.set(\"new_user_id\", d.user.id); } catch(e) {}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth \u2014 Login (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"12345678\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login OK (200)\", function(){ pm.response.to.have.status(200); });",
+                  "var d = pm.response.json(); pm.environment.set(\"token\", d.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth \u2014 Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Auth \u2014 Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users (Admin)",
+      "item": [
+        {
+          "name": "Users \u2014 All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Users \u2014 Assign Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{new_user_id}}/assign-role",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{new_user_id}}",
+                "assign-role"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"author\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Articles",
+      "item": [
+        {
+          "name": "Articles \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/articles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My first article\",\n  \"body\": \"Draft body\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Created (201)\", function(){ pm.response.to.have.status(201); });",
+                  "try { var d = pm.response.json(); if (d.id) pm.environment.set(\"article_id\", d.id); } catch(e) {}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Articles \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/articles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articles"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Articles \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/articles/{{article_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articles",
+                "{{article_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Articles \u2014 Update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/articles/{{article_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articles",
+                "{{article_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My first article (edited)\",\n  \"body\": \"Updated draft body.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Articles \u2014 Publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/articles/{{article_id}}/publish",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articles",
+                "{{article_id}}",
+                "publish"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Articles \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/articles/{{article_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "articles",
+                "{{article_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

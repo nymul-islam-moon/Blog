@@ -4,47 +4,75 @@ namespace App\Policies;
 
 use App\Models\Article;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ArticlePolicy
 {
+    /**
+     * Admins bypass everything.
+     */
+    public function before(User $user, string $ability): ?bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        return null;
+    }
+
     public function viewAny(User $user): bool
     {
-        return true;
+        // editors can list all; authors will be limited in controller (own only)
+        return $user->hasRole('editor') || $user->hasRole('author');
     }
 
     public function view(User $user, Article $article): bool
     {
-        return $article->is_published || $user->id === $article->user_id || $user->role === 'admin';
+        // anyone authenticated can view published; editors can view any; authors can view own
+        if ($article->status === 'published') {
+            return true;
+        }
+        if ($user->hasRole('editor')) {
+            return true;
+        }
+        return $user->id === $article->user_id;
     }
 
     public function create(User $user): bool
     {
-        return in_array($user->role, ['author', 'admin']);
+        // authors and editors can create
+        return $user->hasRole('author') || $user->hasRole('editor');
     }
 
     public function update(User $user, Article $article): bool
     {
-        return $user->id === $article->user_id || $user->role === 'admin';
-    }
-
-    public function delete(User $user, Article $article): bool
-    {
-        return $user->id === $article->user_id || $user->role === 'admin';
-    }
-
-    public function restore(User $user, Article $article): bool
-    {
-        return false;
-    }
-
-    public function forceDelete(User $user, Article $article): bool
-    {
-        return false;
+        // editors can update any; authors can update their own drafts
+        if ($user->hasRole('editor')) {
+            return true;
+        }
+        return $user->id === $article->user_id && $article->status === 'draft';
     }
 
     public function publish(User $user, Article $article): bool
     {
-        return in_array($user->role, ['admin', 'editor']);
+        // only editors (and admins via before) can publish
+        return $user->hasRole('editor');
+    }
+
+    public function delete(User $user, Article $article): bool
+    {
+        // editors can delete any; authors can delete their own drafts
+        if ($user->hasRole('editor')) {
+            return true;
+        }
+        return $user->id === $article->user_id && $article->status === 'draft';
+    }
+
+    public function restore(User $user, Article $article): bool
+    {
+        return $user->hasRole('editor');
+    }
+
+    public function forceDelete(User $user, Article $article): bool
+    {
+        return $user->hasRole('editor');
     }
 }
